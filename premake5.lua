@@ -11,3 +11,4 @@ workspace "OperatingSystem"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "Experiments/Exp01-ProcessScheduling"
+include "Experiments/Exp02-Deadlock"
