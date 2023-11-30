@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <format>
 
 static std::string StateString(ProcessState state)
 {
@@ -47,18 +48,15 @@ bool ProcessScheduler::IsDone()
 
 void ProcessScheduler::PrintProcesses()
 {
-    std::cout << "Algorithm: " << AlgorithmTypeString(m_AlgorithmType) << "\n";
-    std::cout << "Total CPU time: " << m_TotalCPUTime << "\n";
-    std::cout << "-----------------------------------------------------------------\n";
+    std::cout << std::format("Algorithm: {}\n", AlgorithmTypeString(m_AlgorithmType));
+    std::cout << std::format("Total CPU time: {}\n", m_TotalCPUTime);
+    std::cout << "----------------------------------------------------------------\n";
 
-    std::cout << std::setw(12) << "Process ID" << " | "
-              << std::setw(10) << "CPU Time"   << " | "
-              << std::setw(10) << "Need Time"  << " | ";
+    std::cout << std::format("{:<12} | {:<10} | {:<10} | ", "Process ID", "CPU Time", "Need Time");
     if (m_AlgorithmType == AlgorithmType::Priority)
-        std::cout << std::setw(10) << "Priority" << " | ";
-    std::cout << std::setw(10)  << "State" << "\n";
-
-    std::cout << "-----------------------------------------------------------------\n";
+        std::cout << std::format("{:<10} | ", "Priority");
+    std::cout << std::format("{:<9}\n", "State");
+    std::cout << "----------------------------------------------------------------\n";
 
     for (auto& p : m_Processes)
     {
@@ -66,13 +64,11 @@ void ProcessScheduler::PrintProcesses()
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);  // Set color to GREEN
         else if(p.State == ProcessState::Finished)
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);  // Set color to RED
-        
-        std::cout << std::setw(12) << p.ProcessID << " | "
-                  << std::setw(10) << p.CPUTime   << " | "
-                  << std::setw(10) << p.NeedTime  << " | ";
+
+        std::cout << std::format("{:<12} | {:<10} | {:<10} | ", p.ProcessID, p.CPUTime, p.NeedTime);
         if (m_AlgorithmType == AlgorithmType::Priority)
-            std::cout << std::setw(10) << p.Priority << " | ";
-        std::cout << std::setw(10)  << StateString(p.State) << "\n";
+            std::cout << std::format("{:<10} | ", p.Priority);
+        std::cout << std::format("{:<9}\n", StateString(p.State));
 
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
     }

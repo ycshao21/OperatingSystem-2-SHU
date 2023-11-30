@@ -1,194 +1,113 @@
-#include <iostream>
-#include <vector>
-#include <conio.h>
 #include <string>
+#include <format>
 
-struct ProcessInfo
+#include <iostream>
+#include <Windows.h>
+#include <conio.h>
+
+#include <vector>
+#include "BankersAlgorithm.h"
+
+int main()
 {
-    std::vector<int> Max;
-    std::vector<int> Allocation;
-    std::vector<int> Need;
-    bool Finished = false;
+    BankerAlgorithm algorithm;
 
-    void Init(size_t resourceTypeCount)
-    {
-        Max.resize(resourceTypeCount);
-        Allocation.resize(resourceTypeCount);
-        Need.resize(resourceTypeCount);
-        Finished = false;
-    }
-};
-
-int s_ResourceTypeCount = -1;
-std::vector<ProcessInfo> s_Processes;
-std::vector<int> s_Available;
-
-std::vector<int> s_Request;
-std::vector<int> s_Work;
-
-void Init()
-{
-    int processCount = -1;
-    std::cout << "Please enter the number of processes: ";
-    std::cin >> processCount;
-
-    std::cout << "Please enter the number of resource types: ";
-    std::cin >> s_ResourceTypeCount;
-
-    s_Processes.resize(processCount);
-    for (int i = 0; i < processCount; ++i)
-    {
-        auto& process = s_Processes[i];
-        process.Init(s_ResourceTypeCount);
-        std::cout << "P" << i << ": ";
-
-        std::cout << "Max: ";
-        for (int j = 0; j < s_ResourceTypeCount; j++)
-            std::cin >> process.Max[j];
-
-        std::cout << "Allocate: ";
-        for (int j = 0; j < s_ResourceTypeCount; j++)
-        {
-            std::cin >> process.Allocation[j];
-            process.Need[j] = process.Max[j] - process.Allocation[j];
-            if (process.Need[j] < 0)
-                throw;
-        }
-    }
-
-    s_Available.resize(s_ResourceTypeCount);
-    std::cout << "Please enter the number of available resources: ";
-    for (int i = 0; i < s_ResourceTypeCount; ++i)
-        std::cin >> s_Available[i];
-}
-
-bool RequestResource()
-{
-    int processID = 0;
-    std::cout << "Please enter process ID: ";
-    std::cin >> processID;
-    
-    auto& rp = s_Processes[processID];
-    std::cout << "Please enter request: ";
-    s_Request.resize(s_ResourceTypeCount);
-    for (int j = 0; j < s_ResourceTypeCount; ++j)
-        std::cin >> s_Request[j];
-
-    // Step1: Check if request <= need
-    for (int i = 0; i < s_ResourceTypeCount; ++i)
-    {
-        if (s_Request[i] > rp.Need[i])
-        {
-            std::cout << "request > need!" << "\n";
-            return false;
-        }
-    }
-
-    // Step2: Check if request <= available
-    for (int i = 0; i < s_ResourceTypeCount; ++i)
-    {
-        if (s_Request[i] > s_Available[i])
-        {
-            std::cout << "request > available!" << "\n";
-            return false;
-        }
-    }
-
-    // Step3: Assume that the request can be satisfied
-    for (int i = 0; i < s_ResourceTypeCount; ++i)
-    {
-        s_Available[i] -= s_Request[i];
-        rp.Need[i] -= s_Request[i];
-        rp.Allocation[i] += s_Request[i];
-    }
-    s_Work = s_Available;
-
-    // Step4: Check security
     while (true)
     {
-        // Check if all processes are finished.
+        system("cls");
+        std::cout << "Banker's Algorithm\n"
+                  << "[1] Initialize\n"
+                  << "[2] Request Resources\n"
+                  << "[3] Exit\n";
+
+        std::cout << "\n";
+        algorithm.PrintInfo();
+        std::cout << "\n";
+
+        char choice = _getch();
+        if (choice < '1' || choice > '3')
+            continue;
+        if (choice == '3')
+            break;
+
+        switch (choice - '0')
         {
-            bool completed = true;
-            for (auto& p : s_Processes)
+            case 1:
             {
-                if (!p.Finished)
+                std::cout << "Initialize\n";
+                algorithm.Reset();
+
+                int processCount = -1;
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                std::cout << "Number of processes: ";
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                std::cin >> processCount;
+
+                int resourceTypeCount = -1;
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                std::cout << "Number of resource types: ";
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                std::cin >> resourceTypeCount;
+
+                algorithm.SetResourceTypeCount(resourceTypeCount);
+
+                for (int i = 0; i < processCount; ++i)
                 {
-                    completed = false;
-                    break;
+                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                    std::cout << "\n-------------------------------------\n";
+                    std::cout << std::format("P{}\n", i);
+                    std::cout << "-------------------------------------\n";
+
+                    std::cout << std::format("Max({}): ", resourceTypeCount);
+                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                    std::vector<int> maxDemands(resourceTypeCount);
+                    for (auto& v: maxDemands)
+                        std::cin >> v;
+
+                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                    std::cout << std::format("Allocation({}): ", resourceTypeCount);
+                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                    std::vector<int> allocatedResources(resourceTypeCount);
+                    for (auto& v: allocatedResources)
+                        std::cin >> v;
+
+                    algorithm.AddProcess(maxDemands, allocatedResources);
                 }
-            }
 
-            if (completed)
-            {
-                std::cout << "Finished!" << std::endl;
-                return true;
-            }
-        }
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                std::cout << std::format("\nAvailable({}): ", resourceTypeCount);
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                std::vector<int> availableResources(resourceTypeCount);
+                for (auto& v: availableResources)
+                    std::cin >> v;
+                algorithm.SetAvailable(availableResources);
 
-        // Try to find a suitable process
-        int index = -1;
-        for (int i = 0; i < s_Processes.size(); ++i)
-        {
-            if (s_Processes[i].Finished)
-                continue;
-
-            bool suitable = true;
-            for (int j = 0; j < s_ResourceTypeCount; ++j)
-            {
-                if (s_Processes[i].Need[j] > s_Work[j])
-                {
-                    suitable = false;
-                    break;
-                }
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);  // Set color to Green
+                std::cout << "\nInitialized!\n";
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                break;
             }
-            if (suitable)
+            case 2:
             {
-                index = i;
+                std::cout << "Request Resources\n";
+                int processID = 0;
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                std::cout << "Process ID: ";
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                std::cin >> processID;
+                
+                std::vector<int> request(algorithm.GetResourceTypeCount());
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                std::cout << std::format("Request({}): ", algorithm.GetResourceTypeCount());
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                for (auto& v: request)
+                    std::cin >> v;
+
+                algorithm.RequestResources(processID, request);
                 break;
             }
         }
 
-        if (index == -1)
-        {
-            std::cout << "No process can allocate resource!!!" << "\n";
-            return false;
-        }
-
-        auto& p = s_Processes[index];
-        std::cout << index << ": ";
-        std::cout << "Work ";
-        for (int j = 0; j < s_ResourceTypeCount; ++j)
-            std::cout << s_Work[j] << " ";
-
-        std::cout << "| Need ";
-        for (int j = 0; j < s_ResourceTypeCount; ++j)
-            std::cout << p.Need[j] << " ";
-
-        std::cout << "| Allocation ";
-        for (int j = 0; j < s_ResourceTypeCount; ++j)
-            std::cout << p.Allocation[j] << " ";
-
-        std::cout << "| Word + Allocation ";
-        for (int j = 0; j < s_ResourceTypeCount; ++j)
-        {
-            s_Work[j] += p.Allocation[j];
-            std::cout << s_Work[j] << " ";
-        }
-
-        std::cout << "| Finished!" << "\n";
-        p.Finished = true;
-    }
-}
-
-int main()
-{
-    while (true)
-    {
-        system("cls");
-
-        Init();
-
-        RequestResource();
         std::cout << "Press any key to return...\n";
         _getch();
     }

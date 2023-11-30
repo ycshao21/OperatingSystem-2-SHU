@@ -13,16 +13,18 @@ int main()
     while (true)
     {
         std::system("cls");
-        std::cout << "Process Scheduling" << "\n"
-                  << "[1] Priority"       << "\n"
-                  << "[2] Round Robin"    << "\n"
-                  << "[3] Exit"           << "\n";
+        std::cout << "Process Scheduling\n"
+                  << "[1] Priority\n"
+                  << "[2] Round Robin\n"
+                  << "[3] Exit\n";
 
-        int choice = _getch() - '0';
-        if (choice == 3) break;
-        if (choice > 3) continue;
+        char choice = _getch();
+        if (choice < '1' || choice > '3')
+            continue;
+        if (choice == '3')
+            break;
 
-        scheduler.SetAlgorithmType((AlgorithmType)choice);
+        scheduler.SetAlgorithmType((AlgorithmType)(choice - '0'));
 
         std::system("cls");
         scheduler.Reset();
