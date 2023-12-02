@@ -1,8 +1,6 @@
 #include <iostream>
-#include <vector>
 #include <conio.h>
 
-#include "Random.h"
 #include "ProcessScheduler.h"
 
 int main()

@@ -12,3 +12,4 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 include "Experiments/Exp01-ProcessScheduling"
 include "Experiments/Exp02-Deadlock"
+include "Experiments/Exp03-PagedMemoryManagement"
