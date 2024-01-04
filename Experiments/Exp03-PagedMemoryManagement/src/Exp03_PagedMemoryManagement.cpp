@@ -94,7 +94,7 @@ void ExecuteAlgorithm_Task01(
     memory.Clear();
 }
 
-void Task01()
+void AlgorithmDemonstration()
 {
     PagedMemory memory;
 
@@ -166,8 +166,7 @@ void ExecuteAlgorithm_Task02(
     memory.Clear();
 }
 
-
-void Task02()
+void PerformanceTest()
 {
     PagedMemory memory;
 
@@ -206,8 +205,8 @@ int main()
     {
         system("cls");
         std::cout << "Paged Memory Management\n"
-                  << "[1] Task 01\n"
-                  << "[2] Task 02\n"
+                  << "[1] Algorithm Demonstration\n"
+                  << "[2] Performance Test\n"
                   << "[3] Exit\n";
         std::cout << "\n";
 
@@ -219,8 +218,8 @@ int main()
 
         switch (choice - '0')
         {
-            case 1: { Task01(); break; }
-            case 2: { Task02(); break; }
+            case 1: { AlgorithmDemonstration(); break; }
+            case 2: { PerformanceTest(); break; }
         }
         std::cout << "Press any key to return...\n";
         _getch();
