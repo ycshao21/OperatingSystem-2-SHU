@@ -1,13 +1,12 @@
+#include "PagedMemory.h"
+
+#include "Utils/Random.h"
+#include "Utils/ConsoleTextColor.h"
+
 #include <iostream>
 #include <format>
 #include <functional>
-#include "Random.h"
-#include "PagedMemory.h"
-
-enum class AlgorithmType: uint8_t
-{
-    Optimal = 0, FIFO, LRU
-};
+#include <conio.h>
 
 std::vector<uint32_t> GeneratePageReferences(uint32_t refCount, int pageCount)
 {
@@ -17,156 +16,214 @@ std::vector<uint32_t> GeneratePageReferences(uint32_t refCount, int pageCount)
     return pageRefs;
 }
 
-void PrintMemorySequence(const std::vector<std::vector<uint32_t>>& memoryState, int capacity)
+void PrintMemorySequence(
+    const std::vector<uint32_t>& pageRefs,
+    const std::vector<uint8_t>& missFlags,
+    const std::vector<std::vector<uint32_t>>& memoryState,
+    int blockCount)
 {
-    std::cout << "Memory Sequence: \n";
-    for (int i = 0; i < capacity; ++i)
+    std::cout << std::string(75, '-') << "\n";
+    std::cout << "References | ";
+    for (uint32_t page: pageRefs)
+        std::cout << std::format("{:>2} ", page);
+    std::cout << "\n";
+    std::cout << std::string(75, '-') << "\n";
+    for (int i = 0; i < blockCount; ++i)
     {
+        std::cout << "   Block " << i + 1 << " | ";
         for (int j = 0; j < memoryState.size(); ++j)
         {
-            if (i < memoryState[j].size())
+            if (i >= memoryState[j].size())  // Not used
+                std::cout << " _ ";
+            else if (memoryState[j][i] == (uint32_t)-1)  // Hit
+                std::cout << " / ";
+            else  // Missed
                 std::cout << std::format("{:>2} ", memoryState[j][i]);
-            else
-                std::cout << "   ";
         }
         std::cout << "\n";
     }
+    std::cout << std::string(75, '-') << "\n";
+    std::cout << "   Missed? | ";
+    int missCount = 0;
+    for (uint8_t miss : missFlags)
+    {
+        if (miss == 1)
+        {
+            ++missCount;
+            std::cout << " Y ";
+        }
+        else
+        {
+            std::cout << " N ";
+        }
+    }
+    std::cout << "\n";
+    std::cout << std::string(75, '-') << "\n";
+    float missRate = (float)missCount / (float)pageRefs.size();
+    std::cout << std::format("Miss rate: {0}/{1}={2}\n", missCount, pageRefs.size(), missRate);
+}
+
+void ExecuteAlgorithm_Task01(
+    const std::string& algorithm,
+    PagedMemory& memory,
+    const std::vector<uint32_t>& pageRefs
+)
+{
+    std::vector<std::vector<uint32_t>> memorySequence;
+    std::vector<uint8_t> missFlags;
+
+    SetConsoleTextColor(ConsoleTextColor::Cyan);
+    std::cout << algorithm << "\n";
+    SetConsoleTextColor(ConsoleTextColor::Gray);
+    for (int i = 0; i < pageRefs.size(); ++i)
+    {
+        if (algorithm == "Optimal" && memory.Optimal(pageRefs, i)
+            || algorithm == "FIFO" && memory.FIFO(pageRefs[i])
+            || algorithm == "LRU" && memory.LRU(pageRefs[i]))
+        {
+            missFlags.push_back(1);
+            memorySequence.push_back(memory.GetPages());
+        }
+        else
+        {
+            missFlags.push_back(0);
+            memorySequence.push_back(std::vector<uint32_t>(memory.GetPhysicalBlockCount(), (uint32_t)-1));
+        }
+    }
+    PrintMemorySequence(pageRefs, missFlags, memorySequence, memory.GetPhysicalBlockCount());
+    memory.Clear();
 }
 
 void Task01()
 {
-    // Initialize memory.
     PagedMemory memory;
-    uint32_t memorySize = 3, pageSize = 1;
+
+    // Memory size.
+    SetConsoleTextColor(ConsoleTextColor::Yellow);
+    std::cout << "Please enter the size of virtual memory: ";
+    SetConsoleTextColor(ConsoleTextColor::Gray);
+
+    uint32_t memorySize = 0;
+    std::cin >> memorySize;
     memory.SetVirtualMemorySize(memorySize);
+
+    // Page size.
+    SetConsoleTextColor(ConsoleTextColor::Yellow);
+    std::cout << "Please enter the size of each page: ";
+    SetConsoleTextColor(ConsoleTextColor::Gray);
+
+    uint32_t pageSize = 0;
+    std::cin >> pageSize;
     memory.SetPageSize(pageSize);
-    uint32_t capacity = memorySize / pageSize;
+
+    // Physical block count.
+    uint32_t blockCount = 0;
+    while (true)
+    {
+        SetConsoleTextColor(ConsoleTextColor::Yellow);
+        std::cout << "Please enter the number of physical blocks: ";
+        SetConsoleTextColor(ConsoleTextColor::Gray);
+        std::cin >> blockCount;
+        if (blockCount >= 1 && blockCount <= memory.GetMaxPageCount())
+            break;
+        SetConsoleTextColor(ConsoleTextColor::DarkRed);
+        std::cout << "The number of physical blocks must be within [1, " << memory.GetMaxPageCount() << "]!\n";
+    }
+    memory.SetPhysicalBlockCount(blockCount);
+    std::cout << "\n";
 
     // Generate page references.
-    auto pageRefs = GeneratePageReferences(20, 32);
-    std::cout << "Page references:\n";
-    for (uint32_t page: pageRefs)
-        std::cout << page << " ";
-    std::cout << "\n\n";
-    
-    {
-        std::cout << "-----------\n";
-        std::cout << "| Optimal |\n";
-        std::cout << "-----------\n";
+    auto pageRefs = GeneratePageReferences(20, memory.GetMaxPageCount());
 
-        std::vector<std::vector<uint32_t>> memorySequence;
-        int missCount = 0;
-        for (int i = 0; i < pageRefs.size(); ++i)
-        {
-            if (memory.Optimal(pageRefs, i))
-                ++missCount;
-            memorySequence.push_back(memory.GetPagesInMemory());
-        }
-        PrintMemorySequence(memorySequence, capacity);
-
-        float missRate = (float)missCount / (float)pageRefs.size();
-        std::cout << std::format("miss: {0}/{1}={2}\n", missCount, pageRefs.size(), missRate);
-    }
+    // Execute algorithms.
+    ExecuteAlgorithm_Task01("Optimal", memory, pageRefs);
     std::cout << "\n";
-    memory.Clear();
-
-    {
-        std::cout << "--------\n";
-        std::cout << "| FIFO |\n";
-        std::cout << "--------\n";
-
-        std::vector<std::vector<uint32_t>> memorySequence;
-        int missCount = 0;
-        for (uint32_t ref : pageRefs)
-        {
-            if (memory.FIFO(ref))
-                ++missCount;
-            memorySequence.push_back(memory.GetPagesInMemory());
-        }
-        PrintMemorySequence(memorySequence, capacity);
-
-        float missRate = (float)missCount / (float)pageRefs.size();
-        std::cout << std::format("miss: {0}/{1}={2}\n", missCount, pageRefs.size(), missRate);
-    }
+    ExecuteAlgorithm_Task01("FIFO", memory, pageRefs);
     std::cout << "\n";
-    memory.Clear();
-
-    {
-        std::cout << "-------\n";
-        std::cout << "| LRU |\n";
-        std::cout << "-------\n";
-
-        std::vector<std::vector<uint32_t>> memorySequence;
-        int missCount = 0;
-        for (uint32_t ref : pageRefs)
-        {
-            if (memory.LRU(ref))
-                ++missCount;
-            memorySequence.push_back(memory.GetPagesInMemory());
-        }
-        PrintMemorySequence(memorySequence, capacity);
-
-        float missRate = (float)missCount / (float)pageRefs.size();
-        std::cout << std::format("miss: {0}/{1}={2}\n", missCount, pageRefs.size(), missRate);
-    }
+    ExecuteAlgorithm_Task01("LRU", memory, pageRefs);
+    std::cout << "\n";
 }
+
+void ExecuteAlgorithm_Task02(
+    const std::string& algorithm,
+    PagedMemory& memory,
+    const std::vector<uint32_t>& pageRefs
+)
+{
+    int missCount = 0;
+    for (int i = 0; i < pageRefs.size(); ++i)
+    {
+        if (algorithm == "Optimal" && memory.Optimal(pageRefs, i)
+            || algorithm == "FIFO" && memory.FIFO(pageRefs[i])
+            || algorithm == "LRU" && memory.LRU(pageRefs[i]))
+        {
+            ++missCount;
+        }
+    }
+
+    float hitRate = 1.0f - (float)missCount / (float)pageRefs.size();
+    std::cout << std::format("{:>8} | Miss: {}  Hit rate: {}\n", algorithm, missCount, hitRate);
+    memory.Clear();
+}
+
 
 void Task02()
 {
-    // Initialize memory.
     PagedMemory memory;
-    uint32_t pageSize = 1;
+
+    uint32_t memorySize = 32, pageSize = 1;
+    memory.SetVirtualMemorySize(memorySize);
     memory.SetPageSize(pageSize);
+    SetConsoleTextColor(ConsoleTextColor::Cyan);
+    std::cout << "Virtual Memory: " << memorySize << "\n";
+    std::cout << "Page Size: " << pageSize << "\n";
+
+    uint32_t refCount = 100;
+    std::cout << "References: " << refCount << "\n\n";
+    SetConsoleTextColor(ConsoleTextColor::Gray);
 
     // Generate page references.
-    auto pageRefs = GeneratePageReferences(200, 32);
+    auto pageRefs = GeneratePageReferences(refCount, memory.GetMaxPageCount());
 
-    for (int memorySize = 2; memorySize <= 32; memorySize += 2)
+    std::string separator = std::string(55, '-');
+    for (int blockCount = 2; blockCount <= 12; blockCount += 2)
     {
-        memory.SetVirtualMemorySize(memorySize);
-        std::cout << std::format("Memory size: {}\n", memorySize);
-
-        {
-            int missCount = 0;
-            for (int i = 0; i < pageRefs.size(); ++i)
-            {
-                if (memory.Optimal(pageRefs, i))
-                    ++missCount;
-            }
-            float hitRate = 1.0f - (float)missCount / (float)pageRefs.size();
-            std::cout << std::format("Optimal  Miss: {0}  Hit rate: {1}\n", missCount, hitRate);
-            memory.Clear();
-        }
-
-        {
-            int missCount = 0;
-            for (uint32_t ref: pageRefs)
-            {
-                if (memory.FIFO(ref))
-                    ++missCount;
-            }
-            float hitRate = 1.0f - (float)missCount / (float)pageRefs.size();
-            std::cout << std::format("FIFO     Miss: {0}  Hit rate: {1}\n", missCount, hitRate);
-            memory.Clear();
-        }
-
-        {
-            int missCount = 0;
-            for (uint32_t ref: pageRefs)
-            {
-                if (memory.LRU(ref))
-                    ++missCount;
-            }
-            float hitRate = 1.0f - (float)missCount / (float)pageRefs.size();
-            std::cout << std::format("LRU      Miss: {0}  Hit rate: {1}\n", missCount, hitRate);
-            memory.Clear();
-        }
-        std::cout << "---------------------------------------------------------------------\n";
+        memory.SetPhysicalBlockCount(blockCount);
+        std::cout << "Physical Blocks: " << blockCount << "\n";
+        std::cout << separator << "\n";
+        ExecuteAlgorithm_Task02("Optimal", memory, pageRefs);
+        ExecuteAlgorithm_Task02("FIFO", memory, pageRefs);
+        ExecuteAlgorithm_Task02("LRU", memory, pageRefs);
+        std::cout << separator << "\n\n";
     }
 }
 
 int main()
 {
     Random::Init();
-    Task02();
+
+    while (true)
+    {
+        system("cls");
+        std::cout << "Paged Memory Management\n"
+                  << "[1] Task 01\n"
+                  << "[2] Task 02\n"
+                  << "[3] Exit\n";
+        std::cout << "\n";
+
+        char choice = _getch();
+        if (choice < '1' || choice > '3')
+            continue;
+        if (choice == '3')
+            break;
+
+        switch (choice - '0')
+        {
+            case 1: { Task01(); break; }
+            case 2: { Task02(); break; }
+        }
+        std::cout << "Press any key to return...\n";
+        _getch();
+    }
+
 }

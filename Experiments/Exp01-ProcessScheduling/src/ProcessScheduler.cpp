@@ -1,8 +1,9 @@
 #include "ProcessScheduler.h"
-#include <Windows.h>
-#include <iostream>
-#include <iomanip>
+
+#include "Utils/ConsoleTextColor.h"
+
 #include <algorithm>
+#include <iostream>
 #include <format>
 
 static std::string StateString(ProcessState state)
@@ -26,12 +27,22 @@ static std::string AlgorithmTypeString(AlgorithmType type)
     return "";
 }
 
-void ProcessScheduler::Reset()
+static std::string SeparatorString(AlgorithmType type)
+{
+    switch (type)
+    {
+        case Priority:  return std::string(64, '-');
+        case RoundRobin: return std::string(50, '-');
+    }
+    return "";
+}
+
+void ProcessScheduler::Reset(uint32_t processCount)
 {
     m_TotalCPUTime = 0;
 
     m_Processes.clear();
-    m_Processes.resize(5);
+    m_Processes.resize(processCount);
 
     m_WorkingProcess = nullptr;
     for (int i = 0; i < m_Processes.size(); ++i)
@@ -50,27 +61,28 @@ void ProcessScheduler::PrintProcesses()
 {
     std::cout << std::format("Algorithm: {}\n", AlgorithmTypeString(m_AlgorithmType));
     std::cout << std::format("Total CPU time: {}\n", m_TotalCPUTime);
-    std::cout << "----------------------------------------------------------------\n";
+    std::string separator = SeparatorString(m_AlgorithmType);
+    std::cout << separator << "\n";
 
     std::cout << std::format("{:<12} | {:<10} | {:<10} | ", "Process ID", "CPU Time", "Need Time");
     if (m_AlgorithmType == AlgorithmType::Priority)
         std::cout << std::format("{:<10} | ", "Priority");
     std::cout << std::format("{:<9}\n", "State");
-    std::cout << "----------------------------------------------------------------\n";
+    std::cout << separator << "\n";
 
     for (auto& p : m_Processes)
     {
         if (p.State == ProcessState::Working)
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);  // Set color to GREEN
+            SetConsoleTextColor(ConsoleTextColor::Green);
         else if(p.State == ProcessState::Finished)
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);  // Set color to RED
+            SetConsoleTextColor(ConsoleTextColor::DarkRed);
 
         std::cout << std::format("{:<12} | {:<10} | {:<10} | ", p.ProcessID, p.CPUTime, p.NeedTime);
         if (m_AlgorithmType == AlgorithmType::Priority)
             std::cout << std::format("{:<10} | ", p.Priority);
         std::cout << std::format("{:<9}\n", StateString(p.State));
 
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+        SetConsoleTextColor(ConsoleTextColor::Gray);
     }
     std::cout << "\n";
 
@@ -91,26 +103,23 @@ void ProcessScheduler::ScheduleByOneStep()
 
 void ProcessScheduler::PriorityScheduleByOneStep()
 {
-    if (m_WorkingProcess)
-    {
-        if (m_WorkingProcess->NeedTime == 0)
-        {
-            m_WorkingProcess->State = ProcessState::Finished;
-            m_WorkingProcess = FetchNextProcess();
-        }
-        else if (!m_ReadyProcesses.empty() && m_WorkingProcess->Priority < m_ReadyProcesses.front()->Priority)
-        {
-            m_WorkingProcess->State = ProcessState::Ready;
-            m_ReadyProcesses.push_back(m_WorkingProcess);
-            SortProcessesByPriority();
-            m_WorkingProcess = FetchNextProcess();
-        }
-    }
-    else
+    if (!m_WorkingProcess)
     {
         m_WorkingProcess = FetchNextProcess();
     }
-
+    else if (m_WorkingProcess->NeedTime == 0)
+    {
+        m_WorkingProcess->State = ProcessState::Finished;
+        m_WorkingProcess = FetchNextProcess();
+    }
+    else if (!m_ReadyProcesses.empty() && m_WorkingProcess->Priority < m_ReadyProcesses.front()->Priority)
+    {
+        m_WorkingProcess->State = ProcessState::Ready;
+        m_ReadyProcesses.push_back(m_WorkingProcess);
+        SortProcessesByPriority();
+        m_WorkingProcess = FetchNextProcess();
+    }
+    
     if (m_WorkingProcess)
     {
         ++m_WorkingProcess->CPUTime;

@@ -14,7 +14,6 @@ public:
     uint32_t GetResourceTypeCount() const { return m_ResourceTypeCount; }
 
     void Reset();
-    bool HasProcesses() const { return !m_Processes.empty(); }
 
     void AddProcess(const std::vector<int>& max, const std::vector<int>& allocation);
     void SetAvailable(const std::vector<int>& available) { m_Available = available; }

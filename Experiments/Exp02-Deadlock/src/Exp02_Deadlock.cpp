@@ -1,12 +1,11 @@
+#include "BankersAlgorithm.h"
+#include "Utils/ConsoleTextColor.h"
+
 #include <string>
 #include <format>
-
-#include <iostream>
-#include <Windows.h>
-#include <conio.h>
-
 #include <vector>
-#include "BankersAlgorithm.h"
+#include <iostream>
+#include <conio.h>
 
 int main()
 {
@@ -38,68 +37,70 @@ int main()
                 algorithm.Reset();
 
                 int processCount = -1;
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                SetConsoleTextColor(ConsoleTextColor::Yellow);
                 std::cout << "Number of processes: ";
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                SetConsoleTextColor(ConsoleTextColor::Gray);
                 std::cin >> processCount;
 
-                int resourceTypeCount = -1;
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                int typeCount = -1;
+                SetConsoleTextColor(ConsoleTextColor::Yellow);
                 std::cout << "Number of resource types: ";
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
-                std::cin >> resourceTypeCount;
+                SetConsoleTextColor(ConsoleTextColor::Gray);
+                std::cin >> typeCount;
 
-                algorithm.SetResourceTypeCount(resourceTypeCount);
+                algorithm.SetResourceTypeCount(typeCount);
+                std::cout << "\n";
 
+                std::string separator(37, '-');
                 for (int i = 0; i < processCount; ++i)
                 {
-                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
-                    std::cout << "\n-------------------------------------\n";
+                    SetConsoleTextColor(ConsoleTextColor::Yellow);
+                    std::cout << separator << "\n";
                     std::cout << std::format("P{}\n", i);
-                    std::cout << "-------------------------------------\n";
+                    std::cout << separator << "\n";
 
-                    std::cout << std::format("Max({}): ", resourceTypeCount);
-                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
-                    std::vector<int> maxDemands(resourceTypeCount);
+                    std::cout << std::format("Max({}): ", typeCount);
+                    SetConsoleTextColor(ConsoleTextColor::Gray);
+                    std::vector<int> maxDemands(typeCount);
                     for (auto& v: maxDemands)
                         std::cin >> v;
 
-                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
-                    std::cout << std::format("Allocation({}): ", resourceTypeCount);
-                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
-                    std::vector<int> allocatedResources(resourceTypeCount);
-                    for (auto& v: allocatedResources)
+                    SetConsoleTextColor(ConsoleTextColor::Yellow);
+                    std::cout << std::format("Allocation({}): ", typeCount);
+                    SetConsoleTextColor(ConsoleTextColor::Gray);
+                    std::vector<int> allocation(typeCount);
+                    for (auto& v: allocation)
                         std::cin >> v;
 
-                    algorithm.AddProcess(maxDemands, allocatedResources);
+                    algorithm.AddProcess(maxDemands, allocation);
                 }
 
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
-                std::cout << std::format("\nAvailable({}): ", resourceTypeCount);
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
-                std::vector<int> availableResources(resourceTypeCount);
-                for (auto& v: availableResources)
+                SetConsoleTextColor(ConsoleTextColor::Yellow);
+                std::cout << std::format("\nAvailable({}): ", typeCount);
+                SetConsoleTextColor(ConsoleTextColor::Gray);
+                std::vector<int> available(typeCount);
+                for (auto& v: available)
                     std::cin >> v;
-                algorithm.SetAvailable(availableResources);
+                algorithm.SetAvailable(available);
 
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);  // Set color to Green
+                SetConsoleTextColor(ConsoleTextColor::Green);
                 std::cout << "\nInitialized!\n";
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                SetConsoleTextColor(ConsoleTextColor::Gray);
                 break;
             }
             case 2:
             {
                 std::cout << "Request Resources\n";
                 int processID = 0;
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                SetConsoleTextColor(ConsoleTextColor::Yellow);
                 std::cout << "Process ID: ";
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                SetConsoleTextColor(ConsoleTextColor::Gray);
                 std::cin >> processID;
                 
                 std::vector<int> request(algorithm.GetResourceTypeCount());
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 14);  // Set color to Light Yellow
+                SetConsoleTextColor(ConsoleTextColor::Yellow);
                 std::cout << std::format("Request({}): ", algorithm.GetResourceTypeCount());
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+                SetConsoleTextColor(ConsoleTextColor::Gray);
                 for (auto& v: request)
                     std::cin >> v;
 

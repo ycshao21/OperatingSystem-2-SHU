@@ -1,18 +1,19 @@
 #include "BankersAlgorithm.h"
 
+#include "Utils/ConsoleTextColor.h"
+
 #include <format>
 #include <iostream>
-#include "Windows.h"
 
-void BankerAlgorithm::AddProcess(const std::vector<int>& maxDemands, const std::vector<int>& allocatedResources)
+void BankerAlgorithm::AddProcess(const std::vector<int>& max, const std::vector<int>& allocation)
 {
     ProcessInfo process;
-    process.Max = maxDemands;
-    process.Allocation = allocatedResources;
+    process.Max = max;
+    process.Allocation = allocation;
 
     process.Need.resize(m_ResourceTypeCount);
     for (int i = 0; i < m_ResourceTypeCount; ++i)
-        process.Need[i] = maxDemands[i] - allocatedResources[i];
+        process.Need[i] = max[i] - allocation[i];
 
     m_Processes.push_back(process);
 }
@@ -24,18 +25,18 @@ bool BankerAlgorithm::RequestResources(int processID, const std::vector<int>& re
         // Step1: Check if request <= need
         if (request[i] > m_Processes[processID].Need[i])
         {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);  // Set color to Red
+            SetConsoleTextColor(ConsoleTextColor::DarkRed);
             std::cout << "\nRequest > Need!\n";
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+            SetConsoleTextColor(ConsoleTextColor::Gray);
             return false;
         }
 
         // Step2: Check if request <= available
         if (request[i] > m_Available[i])
         {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);  // Set color to Red
+            SetConsoleTextColor(ConsoleTextColor::DarkRed);
             std::cout << "\nRequest > Available!\n";
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+            SetConsoleTextColor(ConsoleTextColor::Gray);
             return false;
         }
     }
@@ -52,23 +53,21 @@ bool BankerAlgorithm::RequestResources(int processID, const std::vector<int>& re
     // Step4: Safety algorithm
     std::vector<int> work(m_Available);
     std::vector<uint8_t> finish(m_Processes.size(), 0);
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);  // Set color to Bright White
-    std::cout << "--------------------------------------------------------------------------------\n";
-    std::cout << std::format("{:<7} | {:<10} | {:<10} | {:<10} | {:<18} | {}\n", "Process", "Work", "Need", "Allocation", "Work + Allocation", "Finished");
-    std::cout << "--------------------------------------------------------------------------------\n";
+    SetConsoleTextColor(ConsoleTextColor::White);
+    std::string separator(80, '-');
+    std::cout << separator << "\n";
+    std::cout << std::format("{:<7} | {:<10} | {:<10} | {:<10} | {:<18} | {}\n",
+        "Process", "Work", "Need", "Allocation", "Work + Allocation", "Finished");
+    std::cout << separator << "\n";
 
-    int index = -1;
-    while (true)
+    while (!IsFinished(finish))
     {
-        if (IsFinished(finish))
-            break;
-
-        index = FindSuitableProcess(finish, work);
+        int index = FindSuitableProcess(finish, work);
         if (index == -1)
         {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 4);  // Set color to Red
+            SetConsoleTextColor(ConsoleTextColor::DarkRed);
             std::cout << "\nAllocation failed!\n";
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+            SetConsoleTextColor(ConsoleTextColor::Gray);
 
             // Roll back
             for (int i = 0; i < m_ResourceTypeCount; ++i)
@@ -119,26 +118,28 @@ bool BankerAlgorithm::RequestResources(int processID, const std::vector<int>& re
         std::cout << "true\n";
     }
 
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 10);  // Set color to Green
+    SetConsoleTextColor(ConsoleTextColor::Green);
     std::cout << "\nSucceeded!" << std::endl;
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+    SetConsoleTextColor(ConsoleTextColor::Gray);
 
     return true;
 }
 
 void BankerAlgorithm::PrintInfo() const
 {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);  // Set color to Bright White
+    SetConsoleTextColor(ConsoleTextColor::White);
     if (m_Processes.empty())
     {
         std::cout << "No processes.\n";
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+        SetConsoleTextColor(ConsoleTextColor::Gray);
         return;
     }
 
-    std::cout << "-----------------------------------------------------------\n";
-    std::cout << std::format("{:<7} | {:<10} | {:<10} | {:<10} | {}\n", "Process", "Max", "Allocation", "Need", "Available");
-    std::cout << "-----------------------------------------------------------\n";
+    std::string separator(59, '-');
+    std::cout << separator << "\n";
+    std::cout << std::format("{:<7} | {:<10} | {:<10} | {:<10} | {}\n",
+        "Process", "Max", "Allocation", "Need", "Available");
+    std::cout << separator << "\n";
 
     for (size_t i = 0; i < m_Processes.size(); ++i)
     {
@@ -175,7 +176,7 @@ void BankerAlgorithm::PrintInfo() const
         std::cout << "\n";
     }
     std::cout << "\n";
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);  // Reset color
+    SetConsoleTextColor(ConsoleTextColor::Gray);
 }
 
 bool BankerAlgorithm::IsFinished(const std::vector<uint8_t>& finish) const

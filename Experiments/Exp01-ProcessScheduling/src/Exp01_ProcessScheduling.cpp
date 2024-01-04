@@ -1,7 +1,9 @@
+#include "ProcessScheduler.h"
+
+#include "Utils/Random.h"
+
 #include <iostream>
 #include <conio.h>
-
-#include "ProcessScheduler.h"
 
 int main()
 {
@@ -24,8 +26,12 @@ int main()
 
         scheduler.SetAlgorithmType((AlgorithmType)(choice - '0'));
 
+        std::cout << "Please input the number of processes: ";
+        uint32_t processCount;
+        std::cin >> processCount;
+        scheduler.Reset(processCount);
+
         std::system("cls");
-        scheduler.Reset();
         scheduler.PrintProcesses();
 
         while (!scheduler.IsDone())

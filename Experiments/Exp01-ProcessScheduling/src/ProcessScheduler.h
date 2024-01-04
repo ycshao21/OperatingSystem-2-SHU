@@ -1,10 +1,10 @@
 #pragma once
+#include "PCB.h"
+
 #include <vector>
 #include <list>
 
-#include "PCB.h"
-
-enum AlgorithmType : uint32_t
+enum AlgorithmType : uint8_t
 {
     Priority = 1,
     RoundRobin = 2
@@ -15,7 +15,7 @@ class ProcessScheduler
 public:
     bool IsDone();
 
-    void Reset();
+    void Reset(uint32_t processCount);
     void SetAlgorithmType(AlgorithmType type) { m_AlgorithmType = type; }
     void PrintProcesses();
 

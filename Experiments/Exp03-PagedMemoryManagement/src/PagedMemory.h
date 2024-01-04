@@ -8,14 +8,18 @@ public:
     PagedMemory() = default;
     ~PagedMemory() = default;
 
+    const std::vector<uint32_t>& GetPages() const { return m_Pages; }
+
+    void Clear();
     void SetVirtualMemorySize(uint32_t virtualMemorySize) { m_VirtualMemorySize = virtualMemorySize; }
 
-    uint32_t GetPageSize() const { return m_PageSize; }
     void SetPageSize(uint32_t pageSize) { m_PageSize = pageSize; }
+    uint32_t GetPageSize() const { return m_PageSize; }
 
-    void Clear() { m_Pages.clear(); }
+    uint32_t GetMaxPageCount() const { return m_VirtualMemorySize / m_PageSize; }
 
-    std::vector<uint32_t> GetPagesInMemory() const { return std::vector<uint32_t>(m_Pages.begin(), m_Pages.end()); }
+    void SetPhysicalBlockCount(uint32_t physicalBlockCount) { m_PhysicalBlockCount = physicalBlockCount; }
+    uint32_t GetPhysicalBlockCount() const { return m_PhysicalBlockCount; }
 
     // Algorithms for page replacement, return whether the page referenced is missing.
 
@@ -28,5 +32,7 @@ private:
 private:
     uint32_t m_VirtualMemorySize = 32;
     uint32_t m_PageSize = 1;
-    std::list<uint32_t> m_Pages;
+    std::vector<uint32_t> m_Pages;
+    std::list<uint32_t*> m_ReplaceOrder;
+    uint32_t m_PhysicalBlockCount = 4;
 };
